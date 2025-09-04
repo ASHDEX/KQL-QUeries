@@ -1,0 +1,9 @@
+SecurityEvent
+| where EventID == 1
+| extend EventDataDynamic = parse_json(EventData)
+| extend 
+    Image = tostring(EventDataDynamic.Image),
+    ProcessCommandLine = tostring(EventDataDynamic.CommandLine),
+    Account = coalesce(TargetUserName, SubjectUserName)
+| where Image endswith "schtasks.exe" and ProcessCommandLine contains "/create"
+| project TimeGenerated, Computer, Account, ProcessCommandLine
