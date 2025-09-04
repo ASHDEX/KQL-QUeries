@@ -1,0 +1,6 @@
+SecurityEvent
+| where EventID == 4624
+| where AuthenticationPackageName == "NTLM"
+| where LogonType in (3,9) // Network & NewCredentials
+| summarize Count = count(), Devices = make_set(Computer), SourceIPs = make_set(IpAddress) by Account
+| where Count > 5 and array_length(Devices) > 2
