@@ -1,0 +1,7 @@
+Syslog
+| where SyslogMessage contains "klist" 
+      or SyslogMessage contains "kinit" 
+      or SyslogMessage contains "ticketviewer"
+| where SyslogMessage contains "KRB5CCNAME" 
+      or SyslogMessage contains "/tmp/krb5cc_"
+| project TimeGenerated, Computer, SyslogMessage
