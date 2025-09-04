@@ -1,0 +1,11 @@
+SecurityEvent
+| where EventID == 3
+| extend EventDataDynamic = parse_json(EventData)
+| extend 
+    Image = tostring(EventDataDynamic.Image),
+    DestinationIp = tostring(EventDataDynamic.DestinationIp),
+    DestinationPort = toint(EventDataDynamic.DestinationPort),
+    Account = coalesce(TargetUserName, SubjectUserName)
+| where not(Image has_any ("chrome.exe","firefox.exe","msedge.exe","iexplore.exe"))
+| where DestinationPort in (4444,3389,5985,5986,22)
+| project TimeGenerated, Computer, Account, Image, DestinationIp, DestinationPort
