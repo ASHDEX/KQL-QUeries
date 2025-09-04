@@ -1,0 +1,11 @@
+SecurityEvent
+| where EventID == 1
+| extend EventDataDynamic = parse_json(EventData)
+| extend 
+    Image = tostring(EventDataDynamic.Image),
+    ProcessCommandLine = tostring(EventDataDynamic.ProcessCommandLine),
+    ParentImage = tostring(EventDataDynamic.ParentImage),
+    Account = coalesce(TargetUserName, SubjectUserName)
+| where Image endswith "powershell.exe"
+| where ProcessCommandLine contains "-enc" or ProcessCommandLine contains "FromBase64String"
+| project TimeGenerated, Computer, Account, ParentImage, ProcessCommandLine
