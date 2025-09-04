@@ -1,0 +1,15 @@
+SigninLogs
+| where ResultType in ("50074","50057","51004")   // MFA failed/rejected
+| extend Country = tostring(LocationDetails.countryOrRegion),
+         ASN = tostring(parse_json(NetworkLocationDetails).asn)
+| summarize MFAFailures = count(),
+            UniqueIPs = dcount(IPAddress),
+            Countries = make_set(Country),
+            Apps = make_set(AppDisplayName)
+  by UserPrincipalName, bin(TimeGenerated, 1h)
+// STRONGER filters to kill noise
+| where MFAFailures >= 10                // very high failure count
+| where UniqueIPs >= 3                   // at least 3 distinct IPs
+| where array_length(Countries) >= 2     // from multiple geographies
+| where not(UserPrincipalName has "@service" or UserPrincipalName has "test") // exclude service/test accounts
+| order by MFAFailures desc
