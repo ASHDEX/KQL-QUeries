@@ -1,0 +1,8 @@
+SecurityEvent
+| where EventID == 4624
+| where LogonProcessName == "Kerberos"
+| where Account == "krbtgt" or TargetUserName contains "krbtgt"
+| where not(Computer has "DomainController")
+| sort by TimeGenerated asc
+| extend PreviousTimeGenerated = prev(TimeGenerated)
+| extend TicketLifeTime = TimeGenerated – PreviousTimeGenerated
