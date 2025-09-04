@@ -1,0 +1,6 @@
+DeviceFileEvents
+| where InitiatingProcessFileName =~ "UMWorkerProcess.exe"
+| where FileName has_any ("CacheCleanup.bin", ".txt", ".log", ".cfg", "cleanup.bin")
+   or FolderPath has_any ("CacheCleanup.bin", ".txt", ".log", ".cfg", "cleanup.bin")
+| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, FolderPath, ActionType
+| order by Timestamp desc
