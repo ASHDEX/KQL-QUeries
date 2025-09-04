@@ -1,0 +1,8 @@
+SecurityEvent
+| where EventID == 4624 and LogonProcessName == "Kerberos"
+| extend EventDataDynamic = parse_json(EventData)
+| extend TicketOptions = tostring(EventDataDynamic.TicketOptions)
+| where AuthenticationPackageName == "Kerberos"
+| where TicketOptions in ("0x40810010","0x40810000")
+| where not(Account endswith "$")
+
