@@ -1,0 +1,18 @@
+SigninLogs
+| where ResultType in ("50126","50053","50055","50056","50057")   // failed login codes only
+| where AppDisplayName in ("Office 365 Exchange Online","SharePoint Online","Outlook")
+// exclude noisy accounts inline
+| where UserPrincipalName !in ("service.account@diageo.com","test.user@diageo.com")
+| extend Country = tostring(LocationDetails.countryOrRegion)
+| summarize Failures = countif(ResultType != "0"),
+            Successes = countif(ResultType == "0"),
+            Apps = make_set(AppDisplayName),
+            Countries = make_set(Country),
+            IPs = make_set(IPAddress)
+  by UserPrincipalName, bin(TimeGenerated, 1h)
+// inline trusted countries list
+| extend NonTrustedCountries = set_difference(Countries, dynamic(["IE","GB","US"]))
+| where Failures >= 10 and Successes == 0
+| where array_length(NonTrustedCountries) > 0
+| project TimeGenerated, UserPrincipalName, Failures, Successes, Countries, IPs, Apps, NonTrustedCountries
+| order by Failures desc
