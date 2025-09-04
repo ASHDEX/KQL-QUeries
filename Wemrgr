@@ -1,0 +1,4 @@
+DeviceProcessEvents
+| where InitiatingProcessFileName =~ "UMWorkerProcess.exe"
+| where FileName in~ ("wermgr.exe", "werfault.exe")
+| project Timestamp, DeviceName, InitiatingProcessFileName, FileName, FolderPath, AccountName
