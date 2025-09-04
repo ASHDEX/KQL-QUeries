@@ -1,0 +1,9 @@
+SecurityEvent
+| where EventID == 4769
+| extend EventDataDynamic = parse_json(EventData)
+| extend TicketEncryptionType = tostring(EventDataDynamic.TicketEncryptionType)
+| where TicketEncryptionType in ("0x17","0x12")
+| where AccountType == "User"
+| summarize Count = count() 
+    by Account, ServiceName, Computer, TicketEncryptionType, bin(TimeGenerated, 1h)
+| where Count > 5
