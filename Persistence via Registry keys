@@ -1,0 +1,11 @@
+SecurityEvent
+| where EventID == 13
+| extend EventDataDynamic = parse_json(EventData)
+| extend 
+    RegistryKey = tostring(EventDataDynamic.RegistryKey),
+    RegistryValueName = tostring(EventDataDynamic.RegistryValueName),
+    RegistryValueData = tostring(EventDataDynamic.RegistryValueData),
+    Account = coalesce(TargetUserName, SubjectUserName)
+| where RegistryKey has @"\Software\Microsoft\Windows\CurrentVersion\Run"
+| where not(RegistryValueName in ("OneDrive","SecurityHealth","Windows Defender"))
+| project TimeGenerated, Computer, Account, RegistryKey, RegistryValueName, RegistryValueData
