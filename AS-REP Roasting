@@ -1,0 +1,6 @@
+Syslog
+| where SyslogMessage has_any ("klist", "kinit", "ticketviewer")
+| where SyslogMessage has_any ("KRB5CCNAME", "/tmp/krb5cc_")
+| extend User = extract(@"user=(\w+)", 1, SyslogMessage)  // optional: extract username if present
+| extend CommandLine = extract(@"(klist|kinit|ticketviewer).*", 0, SyslogMessage)
+| project TimeGenerated, Computer, User, CommandLine, SyslogMessage
