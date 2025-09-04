@@ -1,0 +1,10 @@
+SigninLogs
+| extend Country = tostring(LocationDetails.countryOrRegion),
+         ASN = tostring(parse_json(NetworkLocationDetails).asn)   // extract ASN properly
+| summarize Failures = countif(ResultType != "0"), 
+            DistinctIPs = dcount(IPAddress), 
+            Countries = make_set(Country), 
+            ASNs = make_set(ASN)
+  by UserPrincipalName, bin(TimeGenerated, 1h)
+| where Failures > 10 and DistinctIPs > 5
+| order by Failures desc
