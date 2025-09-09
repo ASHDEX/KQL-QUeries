@@ -1,0 +1,12 @@
+let SvcDir = "/etc/systemd/system/";
+DeviceProcessEvents
+| where Timestamp > ago(14d) and OSPlatform == "Linux"
+| where
+  // Cron drops via shell redirection/tee or scripted crontab usage
+  (FileName in~ ("bash","sh","zsh","dash","tee") and ProcessCommandLine matches regex @"(\/etc\/cron\.(?:hourly|daily|weekly|monthly)|\/etc\/cron\.d\/|\/var\/spool\/cron\/).*(>|>>)")
+  or (FileName == "crontab" and ProcessCommandLine !has_any ("-l","-r","-e","-u"))
+  // systemd unit file writes and enablement
+  or (FileName in~ ("cp","mv","tee","bash","sh") and ProcessCommandLine has SvcDir and ProcessCommandLine has ".service")
+  or (FileName == "systemctl" and ProcessCommandLine has_any ("enable","daemon-reload"))
+| summarize actions=count(), samples=make_set(ProcessCommandLine, 5)
+  by DeviceName, InitiatingProcessAccountName
