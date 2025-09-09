@@ -1,0 +1,13 @@
+DeviceFileEvents
+| where Timestamp > ago(7d) and OSPlatform == "Linux"
+| where ActionType in ("FileModified","FileCreated")
+| where FolderPath == "/etc/sudoers" or FolderPath startswith "/etc/sudoers.d/"
+| summarize
+    firstSeen=min(Timestamp),
+    lastSeen=max(Timestamp),
+    edits=count(),
+    editors=make_set(InitiatingProcessFileName),
+    sampleCmd=any(InitiatingProcessCommandLine)
+  by DeviceName, FolderPath, InitiatingProcessAccountName
+| extend editedSafely = iff(array_length(set_intersect(editors, dynamic(["visudo"]))) > 0, "likely-safe", "suspicious")
+| where editedSafely == "suspicious"
