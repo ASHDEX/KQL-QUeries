@@ -1,0 +1,7 @@
+DeviceProcessEvents
+| where Timestamp > ago(14d) and OSPlatform == "Linux"
+| where ProcessCommandLine has_any ("/etc/shadow","unshadow","john","mkpasswd","getent shadow")
+   or (FileName in~ ("cat","grep","awk","sed","tail","less") and ProcessCommandLine has "/etc/shadow")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessParentFileName
+| summarize attempts=count(), sample=any(ProcessCommandLine), parents=make_set(InitiatingProcessParentFileName)
+  by DeviceName, InitiatingProcessAccountName
