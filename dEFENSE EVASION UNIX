@@ -1,0 +1,15 @@
+DeviceProcessEvents
+| where Timestamp > ago(7d) and OSPlatform == "Linux"
+| where ProcessCommandLine has_any (
+    "rm -rf /var/log",
+    "find /var/log -type f -exec truncate -s 0 {} +",
+    "truncate -s 0",
+    "logrotate -f",
+    "journalctl --vacuum-time",
+    "journalctl --vacuum-size",
+    "journalctl --rotate"
+)
+or (FileName in~ ("sh","bash") and ProcessCommandLine matches regex @".*>\s*\/var\/log\/.*")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, FileName, ProcessCommandLine, InitiatingProcessParentFileName
+| summarize attempts=count(), samples=make_set(ProcessCommandLine, 5), parents=make_set(InitiatingProcessParentFileName)
+  by DeviceName, InitiatingProcessAccountName
