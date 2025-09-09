@@ -1,0 +1,12 @@
+DeviceNetworkEvents
+| where Timestamp > ago(24h) and OSPlatform == "Linux"
+| where InitiatingProcessFileName in~ ("ssh","scp","rsync")
+| where ipv4_is_private(RemoteIP) == false and RemoteIP !startswith "127."
+| summarize
+    totalConnections=count(),
+    totalBytesOut=sum(tolong(SentBytes)),
+    remotes=make_set(strcat(RemoteIP,":",tostring(RemotePort)), 10),
+    users=make_set(InitiatingProcessAccountName)
+  by DeviceName
+| where totalBytesOut > 200000000 // ~200 MB; tune per environment
+| order by totalBytesOut desc
