@@ -1,0 +1,10 @@
+DeviceFileEvents
+| where Timestamp > ago(14d) and OSPlatform == "Linux"
+| where ActionType in ("FileCreated","FileModified")
+| where FolderPath endswith "/.ssh/authorized_keys"
+| summarize changes=count(),
+          writers=make_set(InitiatingProcessFileName),
+          sampleCmd=any(InitiatingProcessCommandLine)
+  by DeviceName, InitiatingProcessAccountName, FolderPath
+| extend suspicious = array_length(set_difference(writers, dynamic(["sshd","sftp-server"]))) > 0
+| where suspicious
