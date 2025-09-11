@@ -1,0 +1,5 @@
+SecurityEvent
+| where EventID == 4663
+| where ObjectName endswith ".README.txt" or ObjectName endswith ".locked" or ObjectName endswith ".crypt"
+| summarize Count = count() by Computer, SubjectUserName, bin(TimeGenerated, 5m)
+| where Count > 50
