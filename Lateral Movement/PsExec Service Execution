@@ -1,0 +1,4 @@
+SecurityEvent
+| where EventID == 7045
+| where ServiceName =~ "PSEXESVC" or ServiceFileName has_any ("\\Users\\","\\Temp\\","\\AppData\\") or ServiceFileName contains "cmd.exe /c" or ServiceFileName contains "powershell"
+| project TimeGenerated, Computer, Account=SubjectUserName, ServiceName, ServiceFileName
