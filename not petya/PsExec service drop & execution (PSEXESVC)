@@ -1,0 +1,9 @@
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where ProcessCommandLine has_any ("psexec", "PSEXESVC") or FileName =~ "psexec.exe"
+      or ProcessCommandLine has @"\\ADMIN$"
+| extend LowerCmd = tolower(ProcessCommandLine)
+| where LowerCmd has " -s" or LowerCmd has " -accepteula" or LowerCmd has @"\\admin$"
+| summarize hosts=dcount(DeviceName), samples=make_set(ProcessCommandLine, 5)
+          by InitiatingProcessAccountName, bin(Timestamp, 1h)
+| where hosts >= 2
