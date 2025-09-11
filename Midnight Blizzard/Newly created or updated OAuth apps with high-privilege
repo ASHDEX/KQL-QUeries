@@ -1,0 +1,17 @@
+let lookback = 7d;
+let highPerms = dynamic([
+  "full_access_as_app", "Mail.ReadWrite", "Mail.Read", "MailboxSettings.ReadWrite",
+  "Directory.ReadWrite.All","Directory.AccessAsUser.All","Files.ReadWrite.All"
+]);
+AuditLogs
+| where TimeGenerated > ago(lookback)
+| where Category in ("ApplicationManagement","Consent")
+| where OperationName has_any ("Add app role assignment grant","Consent to application","Add service principal",
+                               "Add application","Update application","Add OAuth2PermissionGrant")
+| extend TargetAppId = tostring(TargetResources[0].id),
+         TargetAppName = tostring(TargetResources[0].displayName),
+         ModifiedProps = tostring(TargetResources[0].modifiedProperties)
+| where ModifiedProps has_any (highPerms)
+| project TimeGenerated, OperationName, InitiatedBy=tostring(InitiatedBy.user.userPrincipalName),
+          TargetAppName, TargetAppId, ModifiedProps
+| order by TimeGenerated desc
