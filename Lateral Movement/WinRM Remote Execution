@@ -1,0 +1,11 @@
+Event
+| where EventID == 1  // Process creation
+| where EventData has "wsmprovhost.exe"
+| extend ParentImage = extract(@"<Data Name='ParentImage'>([^<]+)</Data>", 1, EventData),
+         Image = extract(@"<Data Name='Image'>([^<]+)</Data>", 1, EventData),
+         ProcessCommandLine = extract(@"<Data Name='CommandLine'>([^<]+)</Data>", 1, EventData),
+         User = extract(@"<Data Name='User'>([^<]+)</Data>", 1, EventData)
+| where ParentImage endswith @"\wsmprovhost.exe"
+| where Image has_any ("cmd.exe", "powershell.exe", "python.exe")
+| project TimeGenerated, Computer, User, ParentImage, Image, ProcessCommandLine
+| order by TimeGenerated desc
