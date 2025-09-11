@@ -1,0 +1,12 @@
+let lookback = 24h;
+let jump_boxes = dynamic(["JUMP01","JUMP02"]); // <- allowlist
+SecurityEvent
+| where TimeGenerated > ago(lookback)
+| where EventID == 4624 and LogonType == 10
+| project TimeGenerated, Account = TargetUserName, Domain = TargetDomainName, Computer, IpAddress
+| summarize hosts=dcount(Computer), host_set=make_set(Computer), srcs=make_set(IpAddress), cnt=count()
+          by Account, Domain, bin(TimeGenerated, 30m)
+| where hosts > 2
+| extend jumpbox_intersection = set_intersect(host_set, jump_boxes)
+| where array_length(jumpbox_intersection) == 0  // No jump box overlap
+| project-away jumpbox_intersection
