@@ -1,0 +1,6 @@
+SecurityEvent
+| where EventID in (4673,4674)  // Sensitive privilege use
+| project TimeGenerated, Computer, Account=SubjectUserName, PrivilegeList=extract(@"Privileges:\s*([^\r\n]+)",1, EventData)
+| where PrivilegeList has_any ("SeImpersonatePrivilege","SeAssignPrimaryTokenPrivilege")
+| summarize cnt=count() by Account, Computer, bin(TimeGenerated, 30m)
+| where cnt > 3
