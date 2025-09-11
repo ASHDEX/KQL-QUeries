@@ -1,0 +1,6 @@
+SecurityEvent
+| where EventID == 4688
+| where NewProcessName endswith "powershell.exe"
+| where CommandLine has_any ("downloadstring", "iex(", "invoke-expression", "-encodedcommand", "-enc ")
+| where CommandLine has_any ("http://", "https://", "ftp://")
+| project TimeGenerated, Computer, SubjectUserName, CommandLine
