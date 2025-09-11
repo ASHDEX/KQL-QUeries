@@ -1,0 +1,13 @@
+let lookback = 6h;
+let admin_shares = pack_array("\\ADMIN$","\\C$","\\IPC$");
+SecurityEvent
+| where TimeGenerated > ago(lookback)
+| where EventID == 5140  // Just share access
+| where ShareName has_any (admin_shares)
+| where isnotempty(SubjectUserName) and isnotempty(IpAddress)
+| summarize computers=dcount(Computer),
+          shares=count(),
+          time_span=max(TimeGenerated) - min(TimeGenerated)
+          by SubjectUserName, IpAddress, bin(TimeGenerated, 10m)
+| where computers >= 5 and time_span <= 5m  // 5+ hosts in 5 minutes
+| order by TimeGenerated desc
