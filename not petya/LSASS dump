@@ -1,0 +1,6 @@
+DeviceProcessEvents
+| where Timestamp > ago(60d)
+| where FileName =~ "rundll32.exe"
+| where ProcessCommandLine has_all ("comsvcs.dll", "MiniDump")
+| where ProcessCommandLine has_any ("lsass", "lsass.exe", "TaskMgr") // common arg references
+| project Timestamp, DeviceName, InitiatingProcessAccountName, ProcessCommandLine
