@@ -1,0 +1,12 @@
+SecurityEvent
+| where EventID == 5156
+| extend xml = parse_xml(EventData)
+| mv-expand Data = xml.EventData.Data
+| extend FieldName = tostring(Data["@Name"]), FieldValue = tostring(Data["#text"])
+| summarize kv = make_bag(pack(FieldName, FieldValue)) by TimeGenerated
+| extend DestinationPort = toint(kv.DestinationPort),
+         DestinationAddress = tostring(kv.DestinationAddress),
+         Application = tostring(kv.Application)
+| where DestinationPort in (53,80)
+| where DestinationAddress !has "internal-domain.com"
+| project TimeGenerated, Application, DestinationAddress, DestinationPort
