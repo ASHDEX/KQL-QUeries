@@ -1,0 +1,5 @@
+CommonSecurityLog
+| where RequestURL contains "netscaler" or AdditionalExtensions contains "netscaler"
+| where RequestURL contains "cookie=" or RequestURL contains "host="
+| where RequestMethod == "GET" and RequestClientApplication !contains "Mozilla"
+| project TimeGenerated, Computer, SourceUserName, RequestURL, RequestMethod, RequestClientApplication
