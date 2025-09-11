@@ -1,0 +1,21 @@
+// Requires M365 Unified Audit (OfficeActivity) connected
+let lookback = 3d;
+let appOnlyIds = toscalar(
+  AuditLogs
+  | where TimeGenerated > ago(14d)
+  | where Category in ("ApplicationManagement","Consent")
+  | where OperationName has_any ("Consent to application","Add app role assignment grant","Add OAuth2PermissionGrant")
+  | extend AppId = tostring(TargetResources[0].id)
+  | summarize make_set(AppId)
+);
+OfficeActivity
+| where TimeGenerated > ago(lookback)
+| where OfficeWorkload == "Exchange"
+| where Operation has_any ("MailItemsAccessed","Bind","GetFolder","GetItem","SearchQueryInitiated")
+| where AppId in (appOnlyIds)
+| summarize MailboxesTargeted=dcount(UserId), 
+          Ops=count(),
+          Operations=make_set(Operation)
+          by AppId, bin(TimeGenerated, 30m)
+| where MailboxesTargeted >= 5 or Ops >= 100
+| order by TimeGenerated desc
