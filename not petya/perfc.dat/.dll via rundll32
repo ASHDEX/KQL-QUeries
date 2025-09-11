@@ -1,0 +1,6 @@
+DeviceProcessEvents
+| where Timestamp > ago(60d)
+| where FileName =~ "rundll32.exe"
+| where ProcessCommandLine has_any ("perfc.dat", "perfc.dll")
+| where ProcessCommandLine has_any (",#1", " #1")
+| project Timestamp, DeviceName, ProcessCommandLine, InitiatingProcessAccountName
