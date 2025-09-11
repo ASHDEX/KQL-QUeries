@@ -1,0 +1,17 @@
+let qa = DeviceProcessEvents
+| where Timestamp > ago(14d)
+| where FileName =~ "QuickAssist.exe"
+| project DeviceId, DeviceName, AccountUpn, QATime=Timestamp;
+qa
+| join kind=leftouter (
+    DeviceProcessEvents
+    | where Timestamp > ago(14d)
+    | where tolower(InitiatingProcessFileName) =~ "quickassist.exe"
+       or InitiatingProcessFileName has_any ("QuickAssist","quickassist")
+    | where tolower(FileName) in ("curl.exe","bitsadmin.exe","powershell.exe",
+                                  "cmd.exe","msiexec.exe","ssh.exe","rundll32.exe")
+    | project DeviceId, Timestamp, FileName, ProcessCommandLine, InitiatingProcessFileName
+) on DeviceId
+| where Timestamp between (QATime .. QATime + 30m)
+| extend MinutesAfterStart = datetime_diff("minute", Timestamp, QATime)
+| order by QATime desc, Timestamp asc
