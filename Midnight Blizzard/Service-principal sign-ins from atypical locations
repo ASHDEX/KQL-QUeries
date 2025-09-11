@@ -1,0 +1,21 @@
+let lookback = 7d;
+AADServicePrincipalSignInLogs
+| where TimeGenerated > ago(lookback)
+| where isnotempty(IPAddress)
+| summarize arg_max(TimeGenerated, *) by AppId, ServicePrincipalName, Location, bin(TimeGenerated, 1h)
+| summarize 
+    LocationChanges=dcount(Location),
+    Countries=make_set(Location),
+    IPs=make_set(IPAddress),
+    MinTime=min(TimeGenerated),
+    MaxTime=max(TimeGenerated),
+    Events=count()
+  by AppId, ServicePrincipalName
+| extend TimeDiff = MaxTime - MinTime
+| where (LocationChanges >= 3 and TimeDiff <= 2h) or  // Multiple countries in 2 hours
+        (LocationChanges >= 2 and TimeDiff <= 30m)     // 2 countries in 30 minutes
+| extend ThreatType = case(
+    TimeDiff <= 30m, "IMPOSSIBLE_TRAVEL_HIGH",
+    TimeDiff <= 2h, "IMPOSSIBLE_TRAVEL_MEDIUM",
+    "SUSPICIOUS_GEOGRAPHIC")
+| order by MinTime desc
