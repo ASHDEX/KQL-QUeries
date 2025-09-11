@@ -1,0 +1,10 @@
+Event
+| where EventID == 1  // Process creation
+| where EventData has "reg.exe"
+| extend Image = extract(@"<Data Name='Image'>([^<]+)</Data>", 1, EventData),
+         ProcessCommandLine = extract(@"<Data Name='CommandLine'>([^<]+)</Data>", 1, EventData),
+         User = extract(@"<Data Name='User'>([^<]+)</Data>", 1, EventData)
+| where Image endswith @"\reg.exe"
+| where ProcessCommandLine matches regex @"(?i)reg(\.exe)?\s+save\s+HKLM\\(SAM|SECURITY|SYSTEM)\s+"
+| project TimeGenerated, Computer, User, ProcessCommandLine
+| order by TimeGenerated desc
