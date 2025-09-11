@@ -1,0 +1,4 @@
+SecurityEvent
+| where EventID == 7045
+| where ServiceFileName has_any ("cmd.exe","powershell.exe") or ServiceFileName has_any ("Temp","AppData")
+| project TimeGenerated, Computer, ServiceName, ServiceFileName, Account
