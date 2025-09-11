@@ -1,0 +1,15 @@
+// Registry stage → UAC bypass binary execution within 2 minutes
+let stage = Event
+| where EventID == 13 
+| where EventData has @"HKCU\Software\Classes\ms-settings\Shell\Open\command"
+| extend RegistryKey = extract(@"<Data Name='TargetObject'>([^<]+)</Data>", 1, EventData)
+| project Computer, StageTime=TimeGenerated, RegistryKey;
+Event
+| where EventID == 1 
+| where EventData has_any ("fodhelper.exe", "sdclt.exe", "computerdefaults.exe")
+| extend Image = extract(@"<Data Name='Image'>([^<]+)</Data>", 1, EventData),
+         ProcessCommandLine = extract(@"<Data Name='CommandLine'>([^<]+)</Data>", 1, EventData)
+| join kind=inner stage on Computer
+| where TimeGenerated between (StageTime .. StageTime + 2m)
+| project TimeGenerated, Computer, Image, ProcessCommandLine, 
+          StageTime, RegistryKey
