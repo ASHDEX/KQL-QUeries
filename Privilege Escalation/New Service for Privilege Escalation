@@ -1,0 +1,5 @@
+SecurityEvent
+| where EventID == 7045
+| extend LowerPath = tolower(ServiceFileName)
+| where LowerPath has_any ("\\users\\","\\temp\\","\\appdata\\") or LowerPath contains "powershell -enc" or LowerPath contains "cmd.exe /c"
+| project TimeGenerated, Computer, Account=SubjectUserName, ServiceName, ServiceFileName
