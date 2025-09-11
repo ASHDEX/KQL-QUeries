@@ -1,0 +1,4 @@
+SecurityEvent
+| where EventID == 7045
+| where ServiceFileName has_any ("\\Temp\\","\\Users\\")
+| project TimeGenerated, Computer, ServiceName, ServiceFileName
