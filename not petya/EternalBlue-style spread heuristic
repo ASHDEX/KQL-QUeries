@@ -1,0 +1,10 @@
+DeviceNetworkEvents
+| where Timestamp > ago(60d)
+| where RemotePort == 445
+      and ActionType in ("ConnectionSuccess","InboundConnectionAccepted","OutboundConnection")
+      and not(ipv4_is_private(RemoteIP))  
+      and not(RemoteIP startswith "100.64.")  // Exclude RFC 6598 CGNAT range
+      and not(RemoteIP startswith "169.254.")  // Also exclude link-local if needed
+| summarize distinctPeers=dcount(RemoteIP), sampleIPs=make_set(RemoteIP, 20)
+          by DeviceName, bin(Timestamp, 15m)
+| where distinctPeers >= 15
