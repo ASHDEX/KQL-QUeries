@@ -1,0 +1,12 @@
+let lookback = 60d;
+AuditLogs
+| where TimeGenerated > ago(lookback)
+| where Category == "Consent"
+| where OperationName has_any ("Consent to application","Add OAuth2PermissionGrant")
+| extend AppId = tostring(TargetResources[0].id),
+         AppName = tostring(TargetResources[0].displayName),
+         ConsentType = tostring(AdditionalDetails[0].value)
+| extend VerifiedPublisher = tostring(parse_json(tostring(AdditionalDetails)).VerifiedPublisher)
+| project TimeGenerated, Initiator=tostring(InitiatedBy.user.userPrincipalName),
+          ConsentType, AppName, AppId, VerifiedPublisher, OperationName
+| order by TimeGenerated desc
