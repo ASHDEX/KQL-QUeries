@@ -1,0 +1,9 @@
+SecurityEvent
+| where EventID == 4698
+| extend xml = parse_xml(EventData)
+| extend TaskName = tostring(xml.EventData.Data[0]["#text"]),
+         TaskContent = tostring(xml.EventData.Data[1]["#text"])
+| where TaskName contains "Updater"
+   or TaskContent contains "\\Users\\"
+   or TaskContent contains ".ps1"
+| project TimeGenerated, TaskName, TaskContent
