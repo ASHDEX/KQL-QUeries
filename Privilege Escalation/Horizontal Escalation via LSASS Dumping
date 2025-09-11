@@ -1,0 +1,11 @@
+Event
+| where EventID == 10  // Process accessed
+| where EventData has "lsass.exe"
+| extend SourceImage = extract(@"<Data Name='SourceImage'>([^<]+)</Data>", 1, EventData),
+         TargetImage = extract(@"<Data Name='TargetImage'>([^<]+)</Data>", 1, EventData),
+         GrantedAccess = extract(@"<Data Name='GrantedAccess'>([^<]+)</Data>", 1, EventData),
+         SourceProcessGUID = extract(@"<Data Name='SourceProcessGUID'>([^<]+)</Data>", 1, EventData)
+| where TargetImage endswith @"\lsass.exe"
+| where GrantedAccess has_any ("0x1fffff","0x1410","0x1010","0x143a")
+| project TimeGenerated, Computer, SourceImage, TargetImage, GrantedAccess
+| order by TimeGenerated desc
