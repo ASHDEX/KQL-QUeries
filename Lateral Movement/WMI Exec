@@ -1,0 +1,16 @@
+Event
+| where EventID == 1
+| where EventData has "WmiPrvSE.exe"
+| extend ParentImage = extract(@"<Data Name='ParentImage'>([^<]+)</Data>", 1, EventData),
+         Image = extract(@"<Data Name='Image'>([^<]+)</Data>", 1, EventData),
+         ProcessCommandLine = extract(@"<Data Name='CommandLine'>([^<]+)</Data>", 1, EventData),
+         User = extract(@"<Data Name='User'>([^<]+)</Data>", 1, EventData)
+| where ParentImage endswith @"\WmiPrvSE.exe"
+| where Image has_any ("cmd.exe", "powershell.exe", "wmic.exe", "net.exe")
+| extend ThreatLevel = case(
+    ProcessCommandLine has_any ("powershell -enc", "-encodedcommand"), "HIGH - Encoded PowerShell",
+    ProcessCommandLine has_any ("invoke-", "iex", "downloadstring"), "HIGH - PowerShell Download",
+    ProcessCommandLine has_any ("whoami", "net user", "net group"), "MEDIUM - Reconnaissance",
+    "LOW - Standard Execution")
+| project TimeGenerated, Computer, User, Image, ProcessCommandLine, ThreatLevel
+| order by TimeGenerated desc
