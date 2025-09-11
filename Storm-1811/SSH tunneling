@@ -1,0 +1,21 @@
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where tolower(FileName) == "ssh.exe"
+| where ProcessCommandLine has_any (" -L ", " -R ", " -D ")   // tunneling flags
+// Exclude routine admin
+| where not(ProcessCommandLine has_any ("sudo chown", "htdocs", "apache"))
+// Exclude known SFTP transfer patterns
+| where not(
+        (InitiatingProcessFileName =~ "scp.exe" or InitiatingProcessFileName =~ "sftp.exe")
+        and ProcessCommandLine has " -s -- "
+        and ProcessCommandLine has "sftp"
+        and (
+            ProcessCommandLine has "machine_user" 
+            or ProcessCommandLine has "produser"
+            or ProcessCommandLine has "univera"
+            or ProcessCommandLine matches regex @"10\.(101|2)\.\d+\.\d+"
+            or ProcessCommandLine has "sftp.mey.com.tr"
+        )
+    )
+| project Timestamp, DeviceName, AccountUpn, FileName, ProcessCommandLine, InitiatingProcessFileName
+| order by Timestamp desc
