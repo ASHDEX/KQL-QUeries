@@ -1,0 +1,4 @@
+SecurityEvent
+| where EventID == 4624 and LogonType == 10
+| summarize Count = count(), Hosts = make_set(Computer) by TargetUserName, IpAddress, bin(TimeGenerated, 30m)
+| where Count > 5 and array_length(Hosts) > 2
