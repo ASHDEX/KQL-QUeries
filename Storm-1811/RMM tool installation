@@ -1,0 +1,6 @@
+DeviceProcessEvents
+| where Timestamp > ago(30d)
+| where tolower(FileName) has_any ("screenconnect","netsupport","client32","pcnetservice")
+   or (tolower(FileName) =~ "msiexec.exe" and ProcessCommandLine has_any ("screenconnect","netsupport"))
+| project Timestamp, DeviceName, AccountUpn, FileName, ProcessCommandLine, InitiatingProcessFileName
+| order by Timestamp desc
