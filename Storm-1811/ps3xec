@@ -1,0 +1,11 @@
+DeviceProcessEvents
+| where Timestamp > ago(7d)
+| where tolower(FileName) in ("psexec.exe","psexec64.exe","psexesvc.exe")
+| summarize 
+    Targets=dcount(DeviceName), 
+    First=min(Timestamp), 
+    Last=max(Timestamp),
+    SampleCommands=make_set(ProcessCommandLine, 5)
+    by Operator=InitiatingProcessAccountUpn, SourceDevice=DeviceName
+| where Targets >= 3   // tune threshold for your environment
+| order by Last desc
