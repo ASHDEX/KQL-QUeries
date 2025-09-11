@@ -1,0 +1,9 @@
+DeviceProcessEvents 
+| where Timestamp > ago(7d) 
+| where FileName =~ "wmic.exe" 
+| where ProcessCommandLine has "/node:" and ProcessCommandLine has "process call create" 
+| extend TargetComputer = extract(@"/node:([^\s]+)", 1, ProcessCommandLine)
+| project Timestamp, DeviceName, InitiatingProcessAccountName, ProcessCommandLine, TargetComputer
+| summarize attempts=count(), targets=make_set(TargetComputer, 20) 
+          by InitiatingProcessAccountName, bin(Timestamp, 30m) 
+| where attempts >= 3 and array_length(targets) >= 2
