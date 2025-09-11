@@ -1,0 +1,9 @@
+DeviceProcessEvents
+| where Timestamp > ago(14d)
+| where tolower(FileName) in ("curl.exe","bitsadmin.exe")
+| where ProcessCommandLine has_any ("http://","https://")
+      and ProcessCommandLine has_any (".bat",".cmd",".zip",".7z",".ps1",".msi")
+| extend URL = extract(@"(https?://[^\s'\""]+)", 1, ProcessCommandLine)
+| summarize Events=count(), FirstSeen=min(Timestamp), LastSeen=max(Timestamp) 
+          by DeviceName, AccountUpn, FileName, URL
+| order by LastSeen desc
