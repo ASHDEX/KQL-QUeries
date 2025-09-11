@@ -1,0 +1,5 @@
+DeviceProcessEvents
+| where Timestamp > ago(60d)
+| where FileName in~ ("wevtutil.exe","powershell.exe")
+| where ProcessCommandLine has_any ("wevtutil cl", "Clear-EventLog", "Limit-EventLog")
+| project Timestamp, DeviceName, InitiatingProcessAccountName, ProcessCommandLine
