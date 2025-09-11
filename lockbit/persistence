@@ -1,0 +1,5 @@
+SecurityEvent
+| where EventID == 4698
+| extend TaskNameParsed = extract(@"TaskName:\s*(.+?)(?:\r|\n|$)", 1, EventData)
+| extend TaskContentParsed = extract(@"TaskContent:\s*(.+?)(?:\r|\n|$)", 1, EventData)
+| project TimeGenerated, Computer, SubjectUserName, TaskNameParsed, TaskContentParsed
